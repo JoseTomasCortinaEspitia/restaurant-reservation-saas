@@ -1,0 +1,12 @@
+ETAPA 2 - Restaurant Reservation SaaS
+1. Realiza git commit de tu Etapa 1 primero.
+2. Desde la raiz del proyecto instala dentro de server:
+   npm install bcryptjs jsonwebtoken
+   npm install -D @types/jsonwebtoken
+3. Genera JWT_SECRET (PowerShell):
+   $secret = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+   Add-Content server/.env "JWT_SECRET=$secret"
+4. Extrae el ZIP sobre la carpeta raiz restaurant-reservation-saas (se reemplaza server/src/index.ts).
+5. En server ejecuta: npm run typecheck y npm run dev.
+6. Revisa la respuesta de ChatGPT para las pruebas PowerShell.
+NOTA: El MVP reserva por franjas con inicio exacto. No verifica horarios ni duracion de mesas todavia.
