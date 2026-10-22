@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MemberRole {
+  ADMIN
+  STAFF
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum NotificationType {
+  RESERVATION_CREATED
+  RESERVATION_CONFIRMED
+  RESERVATION_CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships  RestaurantMember[]
+  reservations Reservation[]
+}
+
+model Restaurant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  address   String?
+  timezone  String   @default("America/Bogota")
+  capacity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members       RestaurantMember[]
+  schedules     RestaurantSchedule[]
+  reservations  Reservation[]
+  notifications Notification[]
+}
+
+model RestaurantMember {
+  id           String     @id @default(uuid())
+  userId       String
+  restaurantId String
+  role         MemberRole @default(STAFF)
+  createdAt    DateTime   @default(now())
+
+  user       User       @relation(fields: [userId], references: [id])
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@unique([userId, restaurantId])
+  @@index([restaurantId])
+}
+
+model RestaurantSchedule {
+  id           String  @id @default(uuid())
+  restaurantId String
+  dayOfWeek    Int
+  openTime     String
+  closeTime    String
+  isClosed     Boolean @default(false)
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@unique([restaurantId, dayOfWeek])
+}
+
+model Reservation {
+  id           String            @id @default(uuid())
+  restaurantId String
+  customerId   String
+  startsAt     DateTime
+  partySize    Int
+  status       ReservationStatus @default(PENDING)
+  notes        String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  restaurant    Restaurant    @relation(fields: [restaurantId], references: [id])
+  customer      User          @relation(fields: [customerId], references: [id])
+  notifications Notification[]
+
+  @@index([restaurantId, startsAt])
+  @@index([customerId])
+}
+
+model Notification {
+  id            String           @id @default(uuid())
+  restaurantId  String
+  reservationId String
+  type          NotificationType
+  message       String
+  createdAt     DateTime         @default(now())
+
+  restaurant  Restaurant  @relation(fields: [restaurantId], references: [id])
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+
+  @@index([restaurantId, createdAt])
+}
